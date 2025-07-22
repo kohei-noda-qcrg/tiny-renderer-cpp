@@ -2,6 +2,7 @@
 #define __IMAGE_H__
 
 #include <fstream>
+#include <vector>
 
 #pragma pack(push, 1)
 struct TGA_Header {
@@ -58,15 +59,6 @@ struct TGAColor {
 };
 
 class TGAImage {
-  protected:
-    unsigned char* data;
-    int            width;
-    int            height;
-    int            bytespp;
-
-    bool load_rle_data(std::ifstream& in);
-    bool unload_rle_data(std::ofstream& out);
-
   public:
     enum Format {
         GRAYSCALE = 1,
@@ -75,7 +67,7 @@ class TGAImage {
     };
 
     TGAImage();
-    TGAImage(int w, int h, int bpp);
+    TGAImage(size_t w, size_t h, Format bpp);
     TGAImage(const TGAImage& img);
     bool     read_tga_file(const char* filename);
     bool     write_tga_file(const char* filename, bool rle = true);
@@ -84,13 +76,22 @@ class TGAImage {
     bool     scale(int w, int h);
     TGAColor get(int x, int y);
     bool     set(int x, int y, TGAColor c);
-    ~TGAImage();
+    ~TGAImage() = default;
     TGAImage&      operator=(const TGAImage& img);
-    int            get_width();
-    int            get_height();
-    int            get_bytespp();
+    size_t         get_width();
+    size_t         get_height();
+    Format         get_format();
     unsigned char* buffer();
     void           clear();
+
+  private:
+    std::vector<uint8_t> data;
+    size_t               width;
+    size_t               height;
+    Format               format;
+
+    bool load_rle_data(std::ifstream& in);
+    bool unload_rle_data(std::ofstream& out);
 };
 
 #endif //__IMAGE_H__

@@ -1,3 +1,5 @@
+#include <print>
+
 #include "tgaimage.h"
 
 namespace {
