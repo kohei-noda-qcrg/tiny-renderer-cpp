@@ -63,33 +63,25 @@ auto project(vec3 v) -> Position2D {
     return Position2D{int((v.x + 1) * width / 2), int((v.y + 1) * height / 2)};
 }
 
-auto triangle(std::array<Position2D, 3> t, TGAImage& image, const TGAColor& color) -> void {
-    // sort ascending y order
-    if(t[0].y > t[1].y) std::swap(t[0], t[1]);
-    if(t[0].y > t[2].y) std::swap(t[0], t[2]);
-    if(t[1].y > t[2].y) std::swap(t[1], t[2]);
+auto signed_triangle_area(Position2D a, Position2D b, Position2D c) -> double {
+    return 0.5 * ((b.y - a.y) * (b.x + a.x) + (c.y - b.y) * (c.x + b.x) + (a.y - c.y) * (a.x + c.x));
+}
 
-    const auto height = t[2].y - t[0].y;
-    if(t[0].y != t[1].y) {
-        // fill bottom half
-        const auto segment_height = t[1].y - t[0].y;
-        for(auto y = t[0].y; y <= t[1].y; y++) {
-            const auto x1 = t[0].x + ((t[2].x - t[0].x) * (y - t[0].y)) / height;
-            const auto x2 = t[0].x + ((t[1].x - t[0].x) * (y - t[0].y)) / segment_height;
-            for(auto x = std::min(x1, x2); x < std::max(x1, x2); x++) {
-                image.set(x, y, color);
-            }
-        }
-    }
-    if(t[1].y != t[2].y) {
-        // fill upper half
-        const auto segment_height = t[2].y - t[1].y;
-        for(auto y = t[1].y; y <= t[2].y; y++) {
-            const auto x1 = t[0].x + ((t[2].x - t[0].x) * (y - t[0].y)) / height;
-            const auto x2 = t[1].x + ((t[2].x - t[1].x) * (y - t[1].y)) / segment_height;
-            for(auto x = std::min(x1, x2); x < std::max(x1, x2); x++) {
-                image.set(x, y, color);
-            }
+auto triangle(std::array<Position2D, 3> t, TGAImage& image, const TGAColor& color) -> void {
+    const auto boundary_box_min_x = std::min(std::min(t[0].x, t[1].x), t[2].x);
+    const auto boundary_box_min_y = std::min(std::min(t[0].y, t[1].y), t[2].y);
+    const auto boundary_box_max_x = std::max(std::max(t[0].x, t[1].x), t[2].x);
+    const auto boundary_box_max_y = std::max(std::max(t[0].y, t[1].y), t[2].y);
+    const auto total_area         = signed_triangle_area(t[0], t[1], t[2]);
+#pragma omp parallel for
+    for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
+        for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
+            const auto pos   = Position2D(x, y);
+            const auto alpha = signed_triangle_area(pos, t[1], t[2]) / total_area;
+            const auto beta  = signed_triangle_area(pos, t[2], t[0]) / total_area;
+            const auto gamma = signed_triangle_area(pos, t[0], t[1]) / total_area;
+            if(alpha < 0 || beta < 0 || gamma < 0) continue; // outside of the triangle
+            image.set(x, y, color);
         }
     }
 }
