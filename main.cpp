@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cmath>
-#include <concepts>
 #include <print>
+#include <type_traits>
 
 #include "geometry.h"
 #include "model.h"
@@ -16,26 +16,10 @@ const auto green  = TGAColor{0, 255, 0, 255};
 const auto red    = TGAColor{255, 0, 0, 255};
 const auto blue   = TGAColor{64, 128, 255, 255};
 const auto yellow = TGAColor{255, 200, 0, 255};
-struct Position2D {
-    int x;
-    int y;
 
-    auto operator+(const Position2D& other) const -> Position2D {
-        return Position2D{x + other.x, y + other.y};
-    }
-
-    auto operator-(const Position2D& other) const -> Position2D {
-        return Position2D{x - other.x, y - other.y};
-    }
-
-    template <typename T>
-        requires(std::floating_point<T> || std::integral<T>)
-    auto operator*(const T scaler) const -> Position2D {
-        return Position2D{int(x * scaler), int(y * scaler)};
-    }
-};
-
-auto line(const Position2D pos1, const Position2D pos2, TGAImage& image, const TGAColor& color) -> void {
+template <typename T>
+    requires(std::is_arithmetic_v<T>)
+auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColor& color) -> void {
     auto start = pos1;
     auto end   = pos2;
 
@@ -61,15 +45,15 @@ auto line(const Position2D pos1, const Position2D pos2, TGAImage& image, const T
     }
 }
 
-auto project(const vec3 v) -> Position2D {
-    return Position2D{int((v.x + 1) * width / 2), int((v.y + 1) * height / 2)};
+auto project(const vec3 v) -> vec2<int> {
+    return vec2<int>{int((v.x + 1) * width / 2), int((v.y + 1) * height / 2)};
 }
 
-auto signed_triangle_area(const Position2D a, const Position2D b, const Position2D c) -> double {
+auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> c) -> double {
     return 0.5 * ((b.y - a.y) * (b.x + a.x) + (c.y - b.y) * (c.x + b.x) + (a.y - c.y) * (a.x + c.x));
 }
 
-auto triangle(const std::array<Position2D, 3> t, TGAImage& image, const TGAColor& color) -> void {
+auto triangle(const std::array<vec2<int>, 3> t, TGAImage& image, const TGAColor& color) -> void {
     const auto boundary_box_min_x = std::min(std::min(t[0].x, t[1].x), t[2].x);
     const auto boundary_box_min_y = std::min(std::min(t[0].y, t[1].y), t[2].y);
     const auto boundary_box_max_x = std::max(std::max(t[0].x, t[1].x), t[2].x);
@@ -79,7 +63,7 @@ auto triangle(const std::array<Position2D, 3> t, TGAImage& image, const TGAColor
 #pragma omp parallel for
     for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
         for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
-            const auto pos   = Position2D(x, y);
+            const auto pos   = vec2<int>(x, y);
             const auto alpha = signed_triangle_area(pos, t[1], t[2]) / total_area;
             const auto beta  = signed_triangle_area(pos, t[2], t[0]) / total_area;
             const auto gamma = signed_triangle_area(pos, t[0], t[1]) / total_area;
@@ -109,13 +93,13 @@ auto main(int argc, char** argv) -> int {
         return 1;
     }
 
-    auto model = Model(argv[1]);
+    const auto model = Model(argv[1]);
 
     for(auto i = 0; i < model.nfaces(); i++) {
-        auto posa  = project(model.vert(i, 0));
-        auto posb  = project(model.vert(i, 1));
-        auto posc  = project(model.vert(i, 2));
-        auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
+        const auto posa  = project(model.vert(i, 0));
+        const auto posb  = project(model.vert(i, 1));
+        const auto posc  = project(model.vert(i, 2));
+        const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
         triangle(std::array{posa, posb, posc}, framebuffer, color);
     }
 
