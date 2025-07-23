@@ -1,8 +1,14 @@
 #include <cmath>
+#include <print>
 
+#include "geometry.h"
+#include "model.h"
 #include "tgaimage.h"
 
 namespace {
+constexpr auto width  = 800;
+constexpr auto height = 800;
+
 const auto white  = TGAColor(255, 255, 255, 255);
 const auto green  = TGAColor(0, 255, 0, 255);
 const auto red    = TGAColor(255, 0, 0, 255);
@@ -12,7 +18,6 @@ struct Position2D {
     int x;
     int y;
 };
-} // namespace
 
 auto line(const Position2D pos1, const Position2D pos2, TGAImage& image, const TGAColor& color) -> void {
     auto start = pos1;
@@ -39,22 +44,34 @@ auto line(const Position2D pos1, const Position2D pos2, TGAImage& image, const T
     }
 }
 
-auto main() -> int {
-    constexpr auto width       = 64;
-    constexpr auto height      = 64;
-    auto           framebuffer = TGAImage(width, height, TGAImage::RGB);
+auto project(vec3 v) -> Position2D {
+    return Position2D{int((v.x + 1) * width / 2), int((v.y + 1) * height / 2)};
+}
+} // namespace
 
-    const auto posa = Position2D{7, 3};
-    const auto posb = Position2D{12, 37};
-    const auto posc = Position2D{62, 53};
-    line(posa, posb, framebuffer, blue);
-    line(posc, posb, framebuffer, green);
-    line(posc, posa, framebuffer, yellow);
-    line(posa, posc, framebuffer, red);
+auto main(int argc, char** argv) -> int {
+    if(argc != 2) {
+        std::println(stderr, "Usage: {} path/to/model.obj", argv[0]);
+        return 1;
+    }
 
-    framebuffer.set(posa.x, posa.y, white);
-    framebuffer.set(posb.x, posb.y, white);
-    framebuffer.set(posc.x, posc.y, white);
+    auto model       = Model(argv[1]);
+    auto framebuffer = TGAImage(width, height, TGAImage::RGB);
+
+    for(auto i = 0; i < model.nfaces(); i++) {
+        auto posa = project(model.vert(i, 0));
+        auto posb = project(model.vert(i, 1));
+        auto posc = project(model.vert(i, 2));
+        line(posa, posb, framebuffer, red);
+        line(posb, posc, framebuffer, red);
+        line(posc, posa, framebuffer, red);
+    }
+
+    for(auto i = 0; i < model.nverts(); i++) {
+        auto v = model.vert(i);
+        auto p = project(v);
+        framebuffer.set(p.x, p.y, white);
+    }
     framebuffer.flip_vertically();
 
     framebuffer.write_tga_file("output.tga");
