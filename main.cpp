@@ -25,12 +25,17 @@ auto line(const Position2D pos1, const Position2D pos2, TGAImage& image, const T
     if(start.x > end.x) {
         std::swap(start, end);
     }
+    auto y      = start.y;
+    auto ierror = 0;
     for(auto x = start.x; x <= end.x; x++) {
-        auto t     = (x - start.x) / static_cast<float>(end.x - start.x);
-        auto y     = std::round(start.y + (end.y - start.y) * t);
         auto realx = steep ? y : x;
         auto realy = steep ? x : y;
         image.set(realx, realy, color);
+        ierror += 2 * std::abs(end.y - start.y);
+        if(ierror > end.x - start.x) {
+            y += end.y > start.y ? 1 : -1;
+            ierror -= 2 * (end.x - start.x);
+        }
     }
 }
 
