@@ -75,6 +75,7 @@ auto triangle(const std::array<Position2D, 3> t, TGAImage& image, const TGAColor
     const auto boundary_box_max_x = std::max(std::max(t[0].x, t[1].x), t[2].x);
     const auto boundary_box_max_y = std::max(std::max(t[0].y, t[1].y), t[2].y);
     const auto total_area         = signed_triangle_area(t[0], t[1], t[2]);
+    if(total_area < 1) return; // back-face culling
 #pragma omp parallel for
     for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
         for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
