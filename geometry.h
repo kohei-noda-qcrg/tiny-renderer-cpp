@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -38,6 +39,39 @@ struct vec3 {
     }
     auto operator[](size_t i) const -> const T& {
         return *(&x + i);
+    }
+
+    auto operator+(const vec3<T>& other) const -> vec3<T> {
+        return vec3<T>{x + other.x, y + other.y, z + other.z};
+    }
+
+    auto operator-(const vec3<T>& other) const -> vec3<T> {
+        return vec3<T>{x - other.x, y - other.y, z - other.z};
+    }
+
+    auto operator^(const vec3<T>& other) const -> vec3<T> {
+        return vec3<T>{
+            y * other.z - z * other.y,
+            z * other.x - x * other.z,
+            x * other.y - y * other.x};
+    }
+
+    template <class U>
+        requires(std::is_arithmetic_v<U>)
+    auto operator*(const U scale) const -> vec3<T> {
+        return vec3<T>{x * T(scale), y * T(scale), z * T(scale)};
+    }
+    auto operator*(const vec3<T>& other) const -> T {
+        return T(x * other.x + y * other.y + z * other.z);
+    }
+
+    auto norm() const -> T {
+        return std::sqrt(x * x + y * y + z * z); // euclid norm
+    }
+
+    auto normalize() -> vec3<T> {
+        *this = (*this) * (1 / norm());
+        return *this;
     }
 };
 
