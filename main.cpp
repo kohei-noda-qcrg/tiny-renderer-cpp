@@ -81,15 +81,16 @@ auto main(int argc, char** argv) -> int {
 
     // triangle
     /*
-    const auto triangle0 = std::array<Position2D, 3>{Position2D(10, 70), Position2D(50, 160), Position2D(70, 80)};
-    const auto triangle1 = std::array<Position2D, 3>{Position2D(180, 50), Position2D(150, 1), Position2D(70, 180)};
-    const auto triangle2 = std::array<Position2D, 3>{Position2D(180, 150), Position2D(120, 160), Position2D(130, 180)};
+    const auto triangle0 = std::array{Vec2i(10, 70), Vec2i(50, 160), Vec2i(70, 80)};
+    const auto triangle1 = std::array{Vec2i(180, 50), Vec2i(150, 1), Vec2i(70, 180)};
+    const auto triangle2 = std::array{Vec2i(180, 150), Vec2i(120, 160), Vec2i(130, 180)};
     triangle(triangle0, framebuffer, red);
     triangle(triangle1, framebuffer, white);
     triangle(triangle2, framebuffer, green);
     */
 
     // load model
+    ///*
     if(argc != 2) {
         std::println(stderr, "Usage: {} path/to/model.obj", argv[0]);
         return 1;
