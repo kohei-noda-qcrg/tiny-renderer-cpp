@@ -18,7 +18,7 @@ Model::Model(const std::string_view filename) {
         if(line.starts_with("v ")) {
             // vertex
             iss >> trash;
-            auto v = vec3{};
+            auto v = Vec3d{};
             for(auto i : std::views::iota(0, 3)) {
                 iss >> v[i];
             }
@@ -41,7 +41,7 @@ Model::Model(const std::string_view filename) {
 
 auto Model::nverts() const -> int { return verts.size(); }
 auto Model::nfaces() const -> int { return facet_vrt.size() / 3; }
-auto Model::vert(const int i) const -> vec3 { return verts[i]; }
-auto Model::vert(const int iface, const int nthvert) const -> vec3 {
+auto Model::vert(const int i) const -> Vec3d { return verts[i]; }
+auto Model::vert(const int iface, const int nthvert) const -> Vec3d {
     return verts[facet_vrt[iface * 3 + nthvert]];
 }

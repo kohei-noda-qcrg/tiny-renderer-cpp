@@ -45,8 +45,10 @@ auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColo
     }
 }
 
-auto project(const vec3 v) -> vec2<int> {
-    return vec2<int>{int((v.x + 1) * width / 2), int((v.y + 1) * height / 2)};
+template <class T>
+    requires(std::is_arithmetic_v<T>)
+auto project(const Vec3d v) -> vec2<T> {
+    return vec2<T>{T((v.x + 1) * width / 2), T((v.y + 1) * height / 2)};
 }
 
 auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> c) -> double {
@@ -96,9 +98,9 @@ auto main(int argc, char** argv) -> int {
     const auto model = Model(argv[1]);
 
     for(auto i = 0; i < model.nfaces(); i++) {
-        const auto posa  = project(model.vert(i, 0));
-        const auto posb  = project(model.vert(i, 1));
-        const auto posc  = project(model.vert(i, 2));
+        const auto posa  = project<int>(model.vert(i, 0));
+        const auto posb  = project<int>(model.vert(i, 1));
+        const auto posc  = project<int>(model.vert(i, 2));
         const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
         triangle(std::array{posa, posb, posc}, framebuffer, color);
     }
