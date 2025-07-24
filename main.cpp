@@ -98,12 +98,35 @@ auto main(int argc, char** argv) -> int {
 
     const auto model = Model(argv[1]);
 
+    // clown colors, random
+    /*
     for(auto i = 0; i < model.nfaces(); i++) {
         const auto posa  = project<int>(model.vert(i, 0));
         const auto posb  = project<int>(model.vert(i, 1));
         const auto posc  = project<int>(model.vert(i, 2));
         const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
         triangle(std::array{posa, posb, posc}, framebuffer, color);
+    }
+    */
+
+    // illmination from light_dir
+    const auto light_dir = Vec3d(0, 0, -1);
+    for(auto i = 0; i < model.nfaces(); i++) {
+        auto screen_coords = std::array<Vec2i, 3>();
+        auto world_coords  = std::array<Vec3d, 3>();
+        for(auto j = 0; j < 3; j++) {
+            const auto v     = model.vert(i, j);
+            screen_coords[j] = Vec2i((v.x + 1) * width / 2, (v.y + 1) * height / 2);
+            world_coords[j]  = v;
+        }
+        auto n = (world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0]);
+        n.normalize();
+        const auto intensity = n * light_dir;
+        std::println("intensity: {}", intensity);
+        if(intensity > 0) {
+            const auto color = TGAColor(intensity * 255, intensity * 255, intensity * 255, 255);
+            triangle(screen_coords, framebuffer, color);
+        }
     }
 
     framebuffer.flip_vertically();
