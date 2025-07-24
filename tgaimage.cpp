@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -260,13 +261,15 @@ size_t TGAImage::get_height() {
 
 bool TGAImage::flip_horizontally() {
     if(data.empty()) return false;
-    auto half = width >> 1;
-    for(auto i = 0uz; i < half; i++) {
-        for(auto j = 0uz; j < height; j++) {
-            TGAColor c1 = get(i, j);
-            TGAColor c2 = get(width - 1 - i, j);
-            set(i, j, c2);
-            set(width - 1 - i, j, c1);
+    const auto bytes_per_line = width * format;
+
+    const auto half = width >> 1;
+    for(auto j = 0uz; j < height; j++) {
+        auto* start = &data[j * bytes_per_line];
+        for(auto i = 0uz; i < half; i++) {
+            auto* left  = start + i * format;
+            auto* right = start + (width - 1 - i) * format;
+            std::swap_ranges(left, left + format, right);
         }
     }
     return true;
@@ -274,16 +277,15 @@ bool TGAImage::flip_horizontally() {
 
 bool TGAImage::flip_vertically() {
     if(data.empty()) return false;
-    auto bytes_per_line = width * format;
-    auto line           = std::vector<uint8_t>(bytes_per_line, 0);
+    const auto bytes_per_line = width * format;
 
-    auto half = height >> 1;
+    const auto half = height >> 1;
     for(auto j = 0uz; j < half; j++) {
-        auto l1 = j * bytes_per_line;
-        auto l2 = (height - 1 - j) * bytes_per_line;
-        memmove((void*)line.data(), (void*)(data.data() + l1), bytes_per_line);
-        memmove((void*)(data.data() + l1), (void*)(data.data() + l2), bytes_per_line);
-        memmove((void*)(data.data() + l2), (void*)line.data(), bytes_per_line);
+        const auto l1 = j * bytes_per_line;
+        const auto l2 = (height - 1 - j) * bytes_per_line;
+        std::swap_ranges(data.begin() + l1,
+                         data.begin() + l1 + bytes_per_line,
+                         data.begin() + l2);
     }
     return true;
 }

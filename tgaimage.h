@@ -1,6 +1,7 @@
 #ifndef __IMAGE_H__
 #define __IMAGE_H__
 
+#include <cstdint>
 #include <fstream>
 #include <vector>
 
@@ -24,17 +25,17 @@ struct TGA_Header {
 struct TGAColor {
     union {
         struct {
-            unsigned char b, g, r, a;
+            uint8_t b, g, r, a;
         };
-        unsigned char raw[4];
-        unsigned int  val;
+        uint8_t      raw[4];
+        unsigned int val;
     };
     int bytespp;
 
     TGAColor() : val(0), bytespp(1) {
     }
 
-    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : b(B), g(G), r(R), a(A), bytespp(4) {
+    TGAColor(uint8_t R, uint8_t G, uint8_t B, uint8_t A) : b(B), g(G), r(R), a(A), bytespp(4) {
     }
 
     TGAColor(int v, int bpp) : val(v), bytespp(bpp) {
@@ -43,7 +44,7 @@ struct TGAColor {
     TGAColor(const TGAColor& c) : val(c.val), bytespp(c.bytespp) {
     }
 
-    TGAColor(const unsigned char* p, int bpp) : val(0), bytespp(bpp) {
+    TGAColor(const uint8_t p[4], int bpp) : val(0), bytespp(bpp) {
         for(int i = 0; i < bpp; i++) {
             raw[i] = p[i];
         }
@@ -77,12 +78,12 @@ class TGAImage {
     TGAColor get(int x, int y);
     bool     set(int x, int y, TGAColor c);
     ~TGAImage() = default;
-    TGAImage&      operator=(const TGAImage& img);
-    size_t         get_width();
-    size_t         get_height();
-    Format         get_format();
-    unsigned char* buffer();
-    void           clear();
+    TGAImage& operator=(const TGAImage& img);
+    size_t    get_width();
+    size_t    get_height();
+    Format    get_format();
+    uint8_t*  buffer();
+    void      clear();
 
   private:
     std::vector<uint8_t> data;
