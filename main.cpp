@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <print>
 #include <type_traits>
 
@@ -45,6 +46,12 @@ auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColo
     }
 }
 
+auto rotate(const Vec3d v) -> Vec3d {
+    constexpr auto a  = std::numbers::pi / 6;
+    const auto     ry = Mat<3, 3>{{{std::cos(a), 0, std::sin(a)}, {0, 1, 0}, {-std::sin(a), 0, std::cos(a)}}};
+    return ry * v;
+}
+
 template <class T>
     requires(std::is_arithmetic_v<T>)
 auto project(const Vec3d v) -> vec3<T> {
@@ -60,10 +67,10 @@ auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> 
 }
 
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {
-    const auto boundary_box_min_x = std::min(std::min(t[0].x, t[1].x), t[2].x);
-    const auto boundary_box_min_y = std::min(std::min(t[0].y, t[1].y), t[2].y);
-    const auto boundary_box_max_x = std::max(std::max(t[0].x, t[1].x), t[2].x);
-    const auto boundary_box_max_y = std::max(std::max(t[0].y, t[1].y), t[2].y);
+    const auto boundary_box_min_x = std::max(0, std::min(std::min(t[0].x, t[1].x), t[2].x));
+    const auto boundary_box_min_y = std::max(0, std::min(std::min(t[0].y, t[1].y), t[2].y));
+    const auto boundary_box_max_x = std::min(int(framebuffer.get_width() - 1), std::max(std::max(t[0].x, t[1].x), t[2].x));
+    const auto boundary_box_max_y = std::min(int(framebuffer.get_height() - 1), std::max(std::max(t[0].y, t[1].y), t[2].y));
     const auto t0vec2             = vec2<int>{t[0].x, t[0].y};
     const auto t1vec2             = vec2<int>{t[1].x, t[1].y};
     const auto t2vec2             = vec2<int>{t[2].x, t[2].y};
@@ -112,9 +119,9 @@ auto main(int argc, char** argv) -> int {
     // clown colors, random
     ///*
     for(auto i = 0; i < model.nfaces(); i++) {
-        const auto posa  = project<int>(model.vert(i, 0));
-        const auto posb  = project<int>(model.vert(i, 1));
-        const auto posc  = project<int>(model.vert(i, 2));
+        const auto posa  = project<int>(rotate(model.vert(i, 0)));
+        const auto posb  = project<int>(rotate(model.vert(i, 1)));
+        const auto posc  = project<int>(rotate(model.vert(i, 2)));
         const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
         triangle(std::array{posa, posb, posc}, zbuffer, framebuffer, color);
     }
