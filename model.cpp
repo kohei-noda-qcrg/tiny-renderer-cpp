@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <fstream>
+#include <numeric>
 #include <print>
 #include <ranges>
 #include <sstream>
@@ -37,6 +39,20 @@ Model::Model(const std::string_view filename) {
         }
     }
     std::println(stderr, "# v# {} f# {}", nverts(), nfaces());
+
+    auto idx = [&] {auto ret = std::vector<int>(nfaces()); std::iota(ret.begin(), ret.end(), 0); return ret; }();
+
+    std::sort(idx.begin(), idx.end(),
+              [&](const int a, const int b) {
+                  const auto az_min = std::min(vert(a, 0).z, std::min(vert(a, 1).z, vert(a, 2).z));
+                  const auto bz_min = std::min(vert(b, 0).z, std::min(vert(b, 1).z, vert(b, 2).z));
+                  return az_min < bz_min;
+              });
+
+    auto orig_facet_vrt = facet_vrt;
+    for(auto i = 0; i < nfaces(); i++) {
+        std::copy_n(orig_facet_vrt.begin() + idx[i] * 3, 3, facet_vrt.begin() + i * 3);
+    }
 }
 
 auto Model::nverts() const -> int { return verts.size(); }
