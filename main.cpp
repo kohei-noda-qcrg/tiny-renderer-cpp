@@ -47,30 +47,40 @@ auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColo
 
 template <class T>
     requires(std::is_arithmetic_v<T>)
-auto project(const Vec3d v) -> vec2<T> {
-    return vec2<T>{T((v.x + 1) * width / 2), T((v.y + 1) * height / 2)};
+auto project(const Vec3d v) -> vec3<T> {
+    return vec3<T>{
+        T((v.x + 1) * width / 2),
+        T((v.y + 1) * height / 2),
+        T((v.z + 1) * 255.0 / 2),
+    };
 }
 
 auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> c) -> double {
     return 0.5 * ((b.y - a.y) * (b.x + a.x) + (c.y - b.y) * (c.x + b.x) + (a.y - c.y) * (a.x + c.x));
 }
 
-auto triangle(const std::array<vec2<int>, 3> t, TGAImage& image, const TGAColor& color) -> void {
+auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {
     const auto boundary_box_min_x = std::min(std::min(t[0].x, t[1].x), t[2].x);
     const auto boundary_box_min_y = std::min(std::min(t[0].y, t[1].y), t[2].y);
     const auto boundary_box_max_x = std::max(std::max(t[0].x, t[1].x), t[2].x);
     const auto boundary_box_max_y = std::max(std::max(t[0].y, t[1].y), t[2].y);
-    const auto total_area         = signed_triangle_area(t[0], t[1], t[2]);
+    const auto t0vec2             = vec2<int>{t[0].x, t[0].y};
+    const auto t1vec2             = vec2<int>{t[1].x, t[1].y};
+    const auto t2vec2             = vec2<int>{t[2].x, t[2].y};
+    const auto total_area         = signed_triangle_area(t0vec2, t1vec2, t2vec2);
     if(total_area < 1) return; // back-face culling
 #pragma omp parallel for
     for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
         for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
             const auto pos   = vec2<int>(x, y);
-            const auto alpha = signed_triangle_area(pos, t[1], t[2]) / total_area;
-            const auto beta  = signed_triangle_area(pos, t[2], t[0]) / total_area;
-            const auto gamma = signed_triangle_area(pos, t[0], t[1]) / total_area;
+            const auto alpha = signed_triangle_area(pos, t1vec2, t2vec2) / total_area;
+            const auto beta  = signed_triangle_area(pos, t2vec2, t0vec2) / total_area;
+            const auto gamma = signed_triangle_area(pos, t0vec2, t1vec2) / total_area;
             if(alpha < 0 || beta < 0 || gamma < 0) continue; // outside of the triangle
-            image.set(x, y, color);
+            const auto z = static_cast<uint8_t>(alpha * t[0].z + beta * t[1].z + gamma * t[2].z);
+            if(z < zbuffer.get(x, y).raw[0]) continue;
+            zbuffer.set(x, y, TGAColor(z, 1));
+            framebuffer.set(x, y, color);
         }
     }
 }
@@ -78,6 +88,7 @@ auto triangle(const std::array<vec2<int>, 3> t, TGAImage& image, const TGAColor&
 
 auto main(int argc, char** argv) -> int {
     auto framebuffer = TGAImage(width, height, TGAImage::RGB);
+    auto zbuffer     = TGAImage(width, height, TGAImage::GRAYSCALE);
 
     // triangle
     /*
@@ -105,7 +116,7 @@ auto main(int argc, char** argv) -> int {
         const auto posb  = project<int>(model.vert(i, 1));
         const auto posc  = project<int>(model.vert(i, 2));
         const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
-        triangle(std::array{posa, posb, posc}, framebuffer, color);
+        triangle(std::array{posa, posb, posc}, zbuffer, framebuffer, color);
     }
     //*/
 
@@ -132,7 +143,9 @@ auto main(int argc, char** argv) -> int {
     */
 
     framebuffer.flip_vertically();
+    zbuffer.flip_vertically();
 
     framebuffer.write_tga_file("output.tga");
+    zbuffer.write_tga_file("zbuffer.tga");
     return 0;
 }
