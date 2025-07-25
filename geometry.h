@@ -1,8 +1,10 @@
 #pragma once
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <vector>
 
 template <typename T>
     requires(std::is_arithmetic_v<T>)
@@ -33,6 +35,8 @@ template <typename T>
     requires(std::is_arithmetic_v<T>)
 struct vec3 {
     T x = 0, y = 0, z = 0;
+
+    constexpr inline auto size() const -> size_t { return 3; }
 
     auto operator[](size_t i) -> T& {
         return *(&x + i);
@@ -79,3 +83,45 @@ using Vec3i = vec3<int32_t>;
 using Vec3l = vec3<int64_t>;
 using Vec3f = vec3<float>;
 using Vec3d = vec3<double>;
+
+template <int nrows, int ncols>
+class Mat {
+
+    std::vector<std::vector<double>> data;
+
+  public:
+    Mat() : data(nrows, std::vector<double>(ncols, 0)) {};
+    Mat(std::initializer_list<std::initializer_list<double>> init) {
+        assert(init.size() == nrows);
+        data.reserve(nrows);
+        for(const auto& row : init) {
+            assert(row.size() == ncols);
+            data.emplace_back(row);
+        }
+    }
+    inline auto rows() const -> int { return data.size(); }
+    inline auto cols() const -> int { return data[0].size(); }
+
+    std::vector<double>& operator[](int i) {
+        assert(i >= 0 && i < rows());
+        return data[i];
+    }
+    const std::vector<double>& operator[](int i) const {
+        assert(i >= 0 && i < rows());
+        return data[i];
+    }
+    template <class U>
+        requires(std::is_arithmetic_v<U>)
+    auto operator*(const vec3<U>& v) const -> vec3<U> {
+        assert(rows() == v.size());
+        auto res = vec3<U>(rows());
+
+        for(auto i = 0; i < rows(); i++) {
+            res[i] = 0;
+            for(auto j = 0; j < cols(); j++) {
+                res[i] += ((*this)[i][j]) * v[j];
+            }
+        }
+        return res;
+    }
+};
