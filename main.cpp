@@ -48,7 +48,10 @@ auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColo
 
 auto rotate(const Vec3d v) -> Vec3d {
     constexpr auto a  = std::numbers::pi / 6;
-    const auto     ry = Mat<3, 3>{{{std::cos(a), 0, std::sin(a)}, {0, 1, 0}, {-std::sin(a), 0, std::cos(a)}}};
+    const auto     ry = Mat<3, 3>{
+        std::cos(a), 0, std::sin(a),
+        0, 1, 0,
+        -std::sin(a), 0, std::cos(a)};
     return ry * v;
 }
 
