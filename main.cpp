@@ -55,6 +55,11 @@ auto rotate(const Vec3d v) -> Vec3d {
     return ry * v;
 }
 
+auto perspective(const Vec3d v) -> Vec3d {
+    constexpr auto c = double(3);
+    return v / (1 - v.z / c);
+}
+
 template <class T>
     requires(std::is_arithmetic_v<T>)
 auto project(const Vec3d v) -> vec3<T> {
@@ -122,9 +127,9 @@ auto main(int argc, char** argv) -> int {
     // clown colors, random
     ///*
     for(auto i = 0; i < model.nfaces(); i++) {
-        const auto posa  = project<int>(rotate(model.vert(i, 0)));
-        const auto posb  = project<int>(rotate(model.vert(i, 1)));
-        const auto posc  = project<int>(rotate(model.vert(i, 2)));
+        const auto posa  = project<int>(perspective(rotate(model.vert(i, 0))));
+        const auto posb  = project<int>(perspective(rotate(model.vert(i, 1))));
+        const auto posc  = project<int>(perspective(rotate(model.vert(i, 2))));
         const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
         triangle(std::array{posa, posb, posc}, zbuffer, framebuffer, color);
     }
