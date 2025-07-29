@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <print>
 #include <type_traits>
@@ -17,6 +18,43 @@ const auto green  = TGAColor{0, 255, 0, 255};
 const auto red    = TGAColor{255, 0, 0, 255};
 const auto blue   = TGAColor{64, 128, 255, 255};
 const auto yellow = TGAColor{255, 200, 0, 255};
+
+auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4> {
+    const auto n = normalized(eye - center);
+    const auto l = normalized(cross(up, n));
+    const auto m = normalized(cross(n, l));
+    return mat<4, 4>{{{l.x, l.y, l.z, 0}, {m.x, m.y, m.z, 0}, {n.x, n.y, n.z, 0}, {0, 0, 0, 1}}} * mat<4, 4>{{{1, 0, 0, -center.x}, {0, 1, 0, -center.y}, {0, 0, 1, -center.z}, {0, 0, 0, 1}}};
+}
+
+auto perspective(const double f) -> mat<4, 4> {
+    return {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, -1 / f, 1}}};
+}
+
+auto viewport(const int x, const int y, const int w, const int h) -> mat<4, 4> {
+    return {{{w / 2.0, 0, 0, x + w / 2.0}, {0, h / 2.0, 0, y + w / 2.0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
+}
+auto rasterize(const std::array<Vec4d, 3>& clip, const mat<4, 4>& viewport, std::vector<double>& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {
+    const auto ndc    = std::array<Vec4d, 3>{clip[0] / clip[0].w, clip[1] / clip[1].w, clip[2] / clip[2].w};
+    const auto screen = std::array<Vec2d, 3>{(viewport * ndc[0]).xy(), (viewport * ndc[1]).xy(), (viewport * ndc[2]).xy()};
+
+    const auto ABC = mat<3, 3>{{{screen[0].x, screen[0].y, 1.0}, {screen[1].x, screen[1].y, 1.0}, {screen[2].x, screen[2].y, 1.0}}};
+    if(ABC.det() < 1) return;
+
+    const auto [boundary_box_min_x, boundary_box_max_x] = std::minmax({screen[0].x, screen[1].x, screen[2].x});
+    const auto [boundary_box_min_y, boundary_box_max_y] = std::minmax({screen[0].y, screen[1].y, screen[2].y});
+#pragma omp parallel for
+    for(auto x = std::max<int>(boundary_box_min_x, 0); x <= std::min<int>(boundary_box_max_x, framebuffer.get_width() - 1); x++) {
+        for(auto y = std::max<int>(boundary_box_min_y, 0); y <= std::min<int>(boundary_box_max_y, framebuffer.get_height() - 1); y++) {
+            const auto bc = ABC.invert_transpose() * Vec3d(x, y, 1);
+            if(bc.x < 0 || bc.y < 0 || bc.z < 0) continue;
+            const auto z       = bc * Vec3d(ndc[0].z, ndc[1].z, ndc[2].z);
+            const auto buf_idx = x + y * framebuffer.get_width();
+            if(z <= zbuffer[buf_idx]) continue;
+            zbuffer[buf_idx] = z;
+            framebuffer.set(x, y, color);
+        }
+    }
+}
 
 template <typename T>
     requires(std::is_arithmetic_v<T>)
@@ -124,7 +162,7 @@ auto main(int argc, char** argv) -> int {
     const auto model = Model(argv[1]);
 
     // clown colors, random
-    ///*
+    /*
     for(auto i = 0; i < model.nfaces(); i++) {
         const auto posa  = project<int>(perspective(rotate(model.vert(i, 0))));
         const auto posb  = project<int>(perspective(rotate(model.vert(i, 1))));
@@ -132,7 +170,7 @@ auto main(int argc, char** argv) -> int {
         const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
         triangle(std::array{posa, posb, posc}, zbuffer, framebuffer, color);
     }
-    //*/
+    */
 
     // illmination from light_dir
     /*
@@ -155,11 +193,31 @@ auto main(int argc, char** argv) -> int {
         }
     }
     */
+    // viewport
+    ///*
+    {
+        constexpr auto eye    = Vec3d(-1, 0, 2);
+        constexpr auto center = Vec3d(0, 0, 0);
+        constexpr auto up     = Vec3d(0, 1, 0);
+
+        const auto ModelView   = lookat(eye, center, up);
+        const auto Perspective = perspective(norm(eye - center));
+        const auto ViewPort    = viewport(width / 16, height / 16, width * 7 / 8, height * 7 / 8);
+        auto       zbuffer     = std::vector<double>(width * height, std::numeric_limits<double>::lowest());
+        for(auto i = 0; i < model.nfaces(); i++) {
+            auto clip = std::array<Vec4d, 3>();
+            for(auto d = 0u; d < clip.size(); d++) {
+                auto v  = model.vert(i, d);
+                clip[d] = Perspective * ModelView * Vec4d(v.x, v.y, v.z, 1.0);
+            }
+            const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
+            rasterize(clip, ViewPort, zbuffer, framebuffer, color);
+        }
+    }
+    //*/
 
     framebuffer.flip_vertically();
-    zbuffer.flip_vertically();
 
     framebuffer.write_tga_file("output.tga");
-    zbuffer.write_tga_file("zbuffer.tga");
     return 0;
 }
