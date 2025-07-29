@@ -4,8 +4,10 @@
 #include <iostream>
 #include <type_traits>
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <class T>
+concept Numeric = std::is_arithmetic_v<T>;
+
+template <Numeric T, int n>
 struct vec {
     T  data[n] = {0};
     T& operator[](const int i) {
@@ -18,8 +20,7 @@ struct vec {
     }
 };
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 T operator*(const vec<T, n>& lhs, const vec<T, n>& rhs) {
     T ret = 0; // N.B. Do not ever, ever use such for loops! They are highly confusing.
     for(int i = n; i--; ret += lhs[i] * rhs[i])
@@ -27,8 +28,7 @@ T operator*(const vec<T, n>& lhs, const vec<T, n>& rhs) {
     return ret; // Once upon a time reverse loops were faster than the normal ones, it is not the case anymore.
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 vec<T, n> operator+(const vec<T, n>& lhs, const vec<T, n>& rhs) {
     vec<T, n> ret = lhs;
     for(int i = n; i--; ret[i] += rhs[i])
@@ -36,8 +36,7 @@ vec<T, n> operator+(const vec<T, n>& lhs, const vec<T, n>& rhs) {
     return ret;
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 vec<T, n> operator-(const vec<T, n>& lhs, const vec<T, n>& rhs) {
     vec<T, n> ret = lhs;
     for(int i = n; i--; ret[i] -= rhs[i])
@@ -45,8 +44,7 @@ vec<T, n> operator-(const vec<T, n>& lhs, const vec<T, n>& rhs) {
     return ret;
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 vec<T, n> operator*(const vec<T, n>& lhs, const double& rhs) {
     vec<T, n> ret = lhs;
     for(int i = n; i--; ret[i] *= rhs)
@@ -54,14 +52,12 @@ vec<T, n> operator*(const vec<T, n>& lhs, const double& rhs) {
     return ret;
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 vec<T, n> operator*(const double& lhs, const vec<T, n>& rhs) {
     return rhs * lhs;
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 vec<T, n> operator/(const vec<T, n>& lhs, const double& rhs) {
     vec<T, n> ret = lhs;
     for(int i = n; i--; ret[i] /= rhs)
@@ -69,16 +65,14 @@ vec<T, n> operator/(const vec<T, n>& lhs, const double& rhs) {
     return ret;
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 std::ostream& operator<<(std::ostream& out, const vec<T, n>& v) {
     for(int i = 0; i < n; i++)
         out << v[i] << " ";
     return out;
 }
 
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 struct vec<T, 2> {
     T  x = 0, y = 0;
     T& operator[](const int i) {
@@ -91,8 +85,7 @@ struct vec<T, 2> {
     }
 };
 
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 struct vec<T, 3> {
     T  x = 0, y = 0, z = 0;
     T& operator[](const int i) {
@@ -105,8 +98,7 @@ struct vec<T, 3> {
     }
 };
 
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 struct vec<T, 4> {
     T  x = 0, y = 0, z = 0, w = 0;
     T& operator[](const int i) {
@@ -121,42 +113,36 @@ struct vec<T, 4> {
     vec<T, 3> xyz() const { return {x, y, z}; }
 };
 
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 using vec2  = vec<T, 2>;
 using Vec2i = vec2<int32_t>;
 using Vec2l = vec2<int64_t>;
 using Vec2f = vec2<float>;
 using Vec2d = vec2<double>;
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 using vec3  = vec<T, 3>;
 using Vec3i = vec3<int32_t>;
 using Vec3l = vec3<int64_t>;
 using Vec3f = vec3<float>;
 using Vec3d = vec3<double>;
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 using vec4  = vec<T, 4>;
 using Vec4i = vec4<int32_t>;
 using Vec4l = vec4<int64_t>;
 using Vec4f = vec4<float>;
 using Vec4d = vec4<double>;
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 double norm(const vec<T, n>& v) {
     return std::sqrt(v * v);
 }
 
-template <class T, int n>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int n>
 vec<T, n> normalized(const vec<T, n>& v) {
     return v / norm(v);
 }
 
-template <class T>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T>
 inline vec3<T> cross(const vec3<T>& v1, const vec3<T>& v2) {
     return {v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x};
 }
@@ -210,14 +196,12 @@ struct mat {
     }
 };
 
-template <class T, int nrows, int ncols>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int nrows, int ncols>
 vec<T, ncols> operator*(const vec<T, nrows>& lhs, const mat<nrows, ncols>& rhs) {
     return (mat<1, nrows>{{lhs}} * rhs)[0];
 }
 
-template <class T, int nrows, int ncols>
-    requires(std::is_arithmetic_v<T>)
+template <Numeric T, int nrows, int ncols>
 vec<T, nrows> operator*(const mat<nrows, ncols>& lhs, const vec<T, ncols>& rhs) {
     vec<T, nrows> ret;
     for(int i = nrows; i--; ret[i] = lhs[i] * rhs)
