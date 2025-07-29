@@ -7,8 +7,6 @@ project(
 add_project_arguments('-Wno-missing-field-initializers', language: 'cpp')
 add_project_arguments('-Wfatal-errors', language: 'cpp')
 
-deps = [dependency('eigen3', required: true)]
-
 executable(
   'main',
   files(
@@ -16,6 +14,5 @@ executable(
     'model.cpp',
     'tgaimage.cpp',
   ),
-  dependencies: deps,
   install: true,
 )
