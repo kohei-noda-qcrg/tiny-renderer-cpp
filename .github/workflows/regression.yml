@@ -23,7 +23,6 @@ jobs:
 
       - name: Install ImageMagick
         run: |
-          sudo apt-get update
           sudo apt-get install -y imagemagick
 
       - name: Build
@@ -32,4 +31,4 @@ jobs:
           ninja -C debug
 
       - name: run test
-        run: ./test debug
+        run: ./run_test debug/main

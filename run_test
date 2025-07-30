@@ -9,7 +9,7 @@ error_exit() {
 }
 
 usage() {
-    echo "usage: $0 /path/to/build" >& 2
+    echo "usage: $0 /path/to/binary_to_run" >& 2
 }
 
 SCRIPT_DIR="$(cd $(dirname $0); pwd)"
@@ -18,15 +18,15 @@ OBJDIR="$SCRIPT_DIR/obj"
 
 if [ "$#" -ne 1 ]; then
     error_exit "this script allows one argument only"
+elif [ ! -f "$1" ]; then
+    error_exit "$1 is not a existing file"
+elif [ ! -x "$1" ]; then
+    error_exit "$1 is not executable"
 fi
 
-if [ ! -d "$1" ]; then
-    error_exit "$1 is not a directory or existing directory"
-fi
-
-BIN="$(readlink -f $1)/main"
+BIN="$(readlink -f $1)"
 for f in $(find $OBJDIR -type f); do
-    obj_name=$(basename $f)
+    obj_name="$(basename $f)"
     result_name="${obj_name%.obj}.tga"
     $BIN $f
     compare $SCRIPT_DIR/output.tga $ORIG/$result_name /dev/null
