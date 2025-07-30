@@ -52,10 +52,6 @@ auto perspective(const Vec3d v) -> Vec3d {
     return v / (1 - v.z / c);
 }
 
-auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> c) -> double {
-    return 0.5 * ((b.y - a.y) * (b.x + a.x) + (c.y - b.y) * (c.x + b.x) + (a.y - c.y) * (a.x + c.x));
-}
-
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {
     const auto boundary_box_min_x = std::max(0, std::min(std::min(t[0].x, t[1].x), t[2].x));
     const auto boundary_box_min_y = std::max(0, std::min(std::min(t[0].y, t[1].y), t[2].y));

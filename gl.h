@@ -13,10 +13,13 @@ auto rasterize(const std::array<Vec4d, 3>& clip, const mat<4, 4>& viewport, std:
 
 auto rotate(const Vec3d v) -> Vec3d;
 auto perspective(const Vec3d v) -> Vec3d;
-auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> c) -> double;
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void;
 auto triangle(const std::array<vec2<int>, 3> t, TGAImage& framebuffer, const TGAColor& color) -> void;
 
+template <Numeric T>
+auto signed_triangle_area(const vec2<T> a, const vec2<T> b, const vec2<T> c) -> double {
+    return 0.5 * ((b.y - a.y) * (b.x + a.x) + (c.y - b.y) * (c.x + b.x) + (a.y - c.y) * (a.x + c.x));
+}
 template <Numeric T>
 auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColor& color) -> void {
     auto start = pos1;
