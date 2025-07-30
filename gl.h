@@ -15,6 +15,7 @@ auto rotate(const Vec3d v) -> Vec3d;
 auto perspective(const Vec3d v) -> Vec3d;
 auto signed_triangle_area(const vec2<int> a, const vec2<int> b, const vec2<int> c) -> double;
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void;
+auto triangle(const std::array<vec2<int>, 3> t, TGAImage& framebuffer, const TGAColor& color) -> void;
 
 template <Numeric T>
 auto line(const vec2<T> pos1, const vec2<T> pos2, TGAImage& image, const TGAColor& color) -> void {

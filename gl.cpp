@@ -1,4 +1,5 @@
 #include "gl.h"
+#include "tgaimage.h"
 
 namespace gl {
 auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4> {
@@ -76,6 +77,26 @@ auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& fra
             const auto z = static_cast<uint8_t>(alpha * t[0].z + beta * t[1].z + gamma * t[2].z);
             if(z < zbuffer.get(x, y).raw[0]) continue;
             zbuffer.set(x, y, TGAColor(z, 1));
+            framebuffer.set(x, y, color);
+        }
+    }
+}
+
+// 2D
+auto triangle(const std::array<vec2<int>, 3> t, TGAImage& framebuffer, const TGAColor& color) -> void {
+    const auto boundary_box_min_x = std::max(0, std::min(std::min(t[0].x, t[1].x), t[2].x));
+    const auto boundary_box_min_y = std::max(0, std::min(std::min(t[0].y, t[1].y), t[2].y));
+    const auto boundary_box_max_x = std::min(int(framebuffer.get_width() - 1), std::max(std::max(t[0].x, t[1].x), t[2].x));
+    const auto boundary_box_max_y = std::min(int(framebuffer.get_height() - 1), std::max(std::max(t[0].y, t[1].y), t[2].y));
+    const auto total_area         = signed_triangle_area(t[0], t[1], t[2]);
+#pragma omp parallel for
+    for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
+        for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
+            const auto pos   = vec2<int>(x, y);
+            const auto alpha = signed_triangle_area(pos, t[1], t[2]) / total_area;
+            const auto beta  = signed_triangle_area(pos, t[2], t[0]) / total_area;
+            const auto gamma = signed_triangle_area(pos, t[0], t[1]) / total_area;
+            if(alpha < 0 || beta < 0 || gamma < 0) continue; // outside of the triangle
             framebuffer.set(x, y, color);
         }
     }
