@@ -1,0 +1,35 @@
+name: rendered TGA file regression test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  visual_regression_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build meson clang-19
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Build
+        run: |
+          CC=clang CXX=clang++ meson setup debug
+          ninja -C debug
+
+      - name: run test
+        run: ./test debug
