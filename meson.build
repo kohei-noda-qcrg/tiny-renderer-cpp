@@ -10,6 +10,7 @@ add_project_arguments('-Wfatal-errors', language: 'cpp')
 executable(
   'main',
   files(
+    'gl.cpp',
     'main.cpp',
     'model.cpp',
     'tgaimage.cpp',
