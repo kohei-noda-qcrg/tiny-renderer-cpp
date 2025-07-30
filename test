@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -eu
+
+error_exit() {
+    echo "$1" >& 2
+    usage
+    exit 1
+}
+
+usage() {
+    echo "usage: $0 /path/to/build" >& 2
+}
+
+SCRIPT_DIR="$(cd $(dirname $0); pwd)"
+ORIG="$SCRIPT_DIR/orig"
+OBJDIR="$SCRIPT_DIR/obj"
+
+if [ "$#" -ne 1 ]; then
+    error_exit "this script allows one argument only"
+fi
+
+if [ ! -d "$1" ]; then
+    error_exit "$1 is not a directory or existing directory"
+fi
+
+BIN="$(readlink -f $1)/main"
+for f in $(find $OBJDIR -type f); do
+    obj_name=$(basename $f)
+    result_name="${obj_name%.obj}.tga"
+    $BIN $f
+    compare $SCRIPT_DIR/output.tga $ORIG/$result_name /dev/null
+done
