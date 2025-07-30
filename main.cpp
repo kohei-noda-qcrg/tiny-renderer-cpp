@@ -61,8 +61,7 @@ auto main(int argc, char** argv) -> int {
             screen_coords[j] = Vec3i((v.x + 1) * width / 2, (v.y + 1) * height / 2, 0);
             world_coords[j]  = v;
         }
-        auto n = (world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0]);
-        n = normalized(n);
+        const auto n         = normalized(cross(world_coords[2] - world_coords[0], world_coords[1] - world_coords[0]));
         const auto intensity = n * light_dir;
         std::println("intensity: {}", intensity);
         if(intensity > 0) {
