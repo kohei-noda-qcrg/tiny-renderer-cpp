@@ -1,10 +1,13 @@
+#include <filesystem>
 #include <fstream>
 #include <print>
 #include <ranges>
 #include <sstream>
+#include <string>
 
 #include "geometry.h"
 #include "model.h"
+#include "tgaimage.h"
 
 Model::Model(const std::string_view filename) {
     auto in = std::ifstream();
@@ -52,7 +55,7 @@ Model::Model(const std::string_view filename) {
             }
         }
     }
-    std::println(stderr, "# v# {} f# {} vt# {} vn# {}", nverts(), nfaces(), tex.size(), norms.size());
+    std::println(stderr, "# v# {} f# {} vt# {} vn# {} name# {}", nverts(), nfaces(), tex.size(), norms.size(), filename.data());
     // Painter's algorithm (too slow)
     /*
         auto idx = [&] {auto ret = std::vector<int>(nfaces()); std::iota(ret.begin(), ret.end(), 0); return ret; }();
@@ -69,6 +72,28 @@ Model::Model(const std::string_view filename) {
             std::copy_n(orig_facet_vrt.begin() + idx[i] * 3, 3, facet_vrt.begin() + i * 3);
         }
     */
+}
+auto Model::load_texture(std::string_view obj_file, std::string_view suffix, TGAImage& img) -> bool {
+    const auto last_dot = obj_file.find_last_of(".");
+    if(last_dot == std::string::npos) {
+        std::println(stderr, "invalid filename: {}", obj_file);
+        return false;
+    }
+    const auto filepath = std::format("{}{}", obj_file.substr(0, last_dot), std::string(suffix));
+    if(!std::filesystem::exists(filepath)) {
+        std::println(stderr, "{} does not exists", filepath);
+        return false;
+    }
+    if(!img.read_tga_file(filepath.data())) {
+        std::println(stderr, "failed to load {}", filepath);
+        return false;
+    }
+    img.flip_vertically();
+    return true;
+};
+
+auto Model::load_diffusemap(std::string_view obj_file) -> bool {
+    return load_texture(obj_file, "_diffuse.tga", diffusemap);
 }
 
 auto Model::nverts() const -> int { return verts.size(); }

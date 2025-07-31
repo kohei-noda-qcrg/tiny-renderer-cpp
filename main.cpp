@@ -24,7 +24,10 @@ auto main(int argc, char** argv) -> int {
         return 1;
     }
 
-    const auto model = Model(argv[1]);
+    auto model = Model(argv[1]);
+    if(!model.load_diffusemap(argv[1])) {
+        return 1;
+    }
 
     // paint_clown_model(zbuffer, framebuffer, model, width, height);
     // paint_illumination_model(zbuffer, framebuffer, model, width, height);
