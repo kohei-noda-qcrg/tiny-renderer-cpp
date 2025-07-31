@@ -3,16 +3,19 @@
 set -eu
 
 error_exit() {
-    echo "$1" >& 2
+    echo "$1" >&2
     usage
     exit 1
 }
 
 usage() {
-    echo "usage: $0 /path/to/binary_to_run" >& 2
+    echo "usage: $0 /path/to/binary_to_run" >&2
 }
 
-SCRIPT_DIR="$(cd $(dirname $0); pwd)"
+SCRIPT_DIR="$(
+    cd $(dirname $0)
+    pwd
+)"
 ORIG="$SCRIPT_DIR/orig"
 OBJDIR="$SCRIPT_DIR/obj"
 
@@ -27,6 +30,9 @@ fi
 BIN="$(readlink -f $1)"
 for f in $(find $OBJDIR -type f); do
     obj_name="$(basename $f)"
+    if [[ "$obj_name" != *.obj ]]; then
+        continue
+    fi
     result_name="${obj_name%.obj}.tga"
     $BIN $f
     compare $SCRIPT_DIR/output.tga $ORIG/$result_name /dev/null
