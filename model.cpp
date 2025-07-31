@@ -77,3 +77,9 @@ auto Model::vert(const int i) const -> Vec3d { return verts[i]; }
 auto Model::vert(const int iface, const int nthvert) const -> Vec3d {
     return verts[facet_vrt[iface * 3 + nthvert]];
 }
+auto Model::uv(const int iface, const int nthvert) const -> Vec3d {
+    return tex[facet_tex[iface * 3 + nthvert]];
+}
+auto Model::normal(const int iface, const int nthvert) const -> Vec3d {
+    return norms[facet_nrm[iface * 3 + nthvert]];
+}

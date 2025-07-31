@@ -18,4 +18,6 @@ class Model {
     auto nfaces() const -> int;
     auto vert(const int i) const -> Vec3d;
     auto vert(const int iface, const int nthvert) const -> Vec3d;
+    auto uv(const int iface, const int nthvert) const -> Vec3d;
+    auto normal(const int iface, const int nthvert) const -> Vec3d;
 };
