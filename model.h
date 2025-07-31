@@ -6,7 +6,11 @@
 
 class Model {
     std::vector<Vec3d> verts     = {};
+    std::vector<Vec3d> norms     = {};
+    std::vector<Vec3d> tex       = {};
     std::vector<int>   facet_vrt = {};
+    std::vector<int>   facet_nrm = {};
+    std::vector<int>   facet_tex = {};
 
   public:
     Model(const std::string_view filename);

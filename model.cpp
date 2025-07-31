@@ -23,11 +23,27 @@ Model::Model(const std::string_view filename) {
                 iss >> v[i];
             }
             verts.push_back(v);
+        } else if(line.starts_with("vn ")) {
+            iss >> trash >> trash;
+            auto n = Vec3d{};
+            for(auto i : std::views::iota(0, 3)) {
+                iss >> n[i];
+            }
+            norms.push_back(normalized(n));
+        } else if(line.starts_with("vt ")) {
+            iss >> trash >> trash;
+            auto t = Vec2d{};
+            for(auto i : std::views::iota(0, 2)) {
+                iss >> t[i];
+            }
+            tex.push_back({t.x, 1 - t.y});
         } else if(line.starts_with("f ")) {
             auto f = 0, t = 0, n = 0, cnt = 0;
             iss >> trash;
             while(iss >> f >> trash >> t >> trash >> n) {
                 facet_vrt.push_back(f - 1);
+                facet_tex.push_back(t - 1);
+                facet_nrm.push_back(n - 1);
                 cnt++;
             }
             if(cnt != 3) {
@@ -36,7 +52,7 @@ Model::Model(const std::string_view filename) {
             }
         }
     }
-    std::println(stderr, "# v# {} f# {}", nverts(), nfaces());
+    std::println(stderr, "# v# {} f# {} vt# {} vn# {}", nverts(), nfaces(), tex.size(), norms.size());
     // Painter's algorithm (too slow)
     /*
         auto idx = [&] {auto ret = std::vector<int>(nfaces()); std::iota(ret.begin(), ret.end(), 0); return ret; }();
