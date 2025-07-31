@@ -1,4 +1,5 @@
 #include <print>
+#include <random>
 
 #include "geometry.h"
 #include "gl.h"
@@ -8,6 +9,8 @@
 namespace {
 constexpr auto width  = 800;
 constexpr auto height = 800;
+
+auto rng = std::mt19937(1);
 
 const auto white  = TGAColor{255, 255, 255, 255};
 const auto green  = TGAColor{0, 255, 0, 255};
@@ -87,7 +90,8 @@ auto main(int argc, char** argv) -> int {
                 auto v  = model.vert(i, d);
                 clip[d] = Perspective * ModelView * Vec4d(v.x, v.y, v.z, 1.0);
             }
-            const auto color = TGAColor(std::rand() % 255, std::rand() % 255, std::rand() % 255, std::rand() % 255);
+            const auto rnd   = rng();
+            const auto color = TGAColor((rnd >> 24) & 0xFF, (rnd >> 16) & 0xFF, (rnd >> 8) & 0xFF, rnd & 0xFF);
             gl::rasterize(clip, ViewPort, zbuffer, framebuffer, color);
         }
     }
