@@ -75,13 +75,13 @@ class TGAImage {
     bool     flip_horizontally();
     bool     flip_vertically();
     bool     scale(int w, int h);
-    TGAColor get(int x, int y);
+    TGAColor get(int x, int y) const;
     bool     set(int x, int y, TGAColor c);
     ~TGAImage() = default;
     TGAImage& operator=(const TGAImage& img);
-    size_t    get_width();
-    size_t    get_height();
-    Format    get_format();
+    size_t    get_width() const;
+    size_t    get_height() const;
+    Format    get_format() const;
     uint8_t*  buffer();
     void      clear();
 
