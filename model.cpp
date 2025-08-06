@@ -88,7 +88,6 @@ auto Model::load_texture(std::string_view obj_file, std::string_view suffix, TGA
         std::println(stderr, "failed to load {}", filepath);
         return false;
     }
-    img.flip_vertically();
     return true;
 };
 
@@ -96,13 +95,13 @@ auto Model::load_diffusemap(std::string_view obj_file) -> bool {
     return load_texture(obj_file, "_diffuse.tga", diffusemap);
 }
 
-auto Model::nverts() const -> int { return verts.size(); }
-auto Model::nfaces() const -> int { return facet_vrt.size() / 3; }
+auto Model::nverts() const -> size_t { return verts.size(); }
+auto Model::nfaces() const -> size_t { return facet_vrt.size() / 3; }
 auto Model::vert(const int i) const -> Vec3d { return verts[i]; }
 auto Model::vert(const int iface, const int nthvert) const -> Vec3d {
     return verts[facet_vrt[iface * 3 + nthvert]];
 }
-auto Model::uv(const int iface, const int nthvert) const -> Vec3d {
+auto Model::uv(const int iface, const int nthvert) const -> Vec2d {
     return tex[facet_tex[iface * 3 + nthvert]];
 }
 auto Model::normal(const int iface, const int nthvert) const -> Vec3d {

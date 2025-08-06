@@ -68,10 +68,10 @@ class TGAImage {
     };
 
     TGAImage();
-    TGAImage(size_t w, size_t h, Format bpp);
+    TGAImage(const size_t w, const size_t h, const Format bpp);
     TGAImage(const TGAImage& img);
-    bool     read_tga_file(const char* filename);
-    bool     write_tga_file(const char* filename, bool rle = true);
+    bool     read_tga_file(const std::string filename);
+    bool     write_tga_file(const std::string filename, const bool rle = true);
     bool     flip_horizontally();
     bool     flip_vertically();
     bool     scale(int w, int h);

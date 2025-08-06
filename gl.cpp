@@ -1,20 +1,28 @@
+#include <cmath>
+
+#include "geometry.h"
 #include "gl.h"
 #include "tgaimage.h"
 
 namespace gl {
+
+Matrix ViewPort;
+Matrix ModelView;
+Matrix Perspective;
+
 auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4> {
-    const auto n = normalized(eye - center);
+    const auto n = normalized(center - eye);
     const auto l = normalized(cross(up, n));
     const auto m = normalized(cross(n, l));
-    return mat<4, 4>{{{l.x, l.y, l.z, 0}, {m.x, m.y, m.z, 0}, {n.x, n.y, n.z, 0}, {0, 0, 0, 1}}} * mat<4, 4>{{{1, 0, 0, -center.x}, {0, 1, 0, -center.y}, {0, 0, 1, -center.z}, {0, 0, 0, 1}}};
+    return mat<4, 4>{{{l.x, l.y, l.z, 0}, {m.x, m.y, m.z, 0}, {n.x, n.y, n.z, 0}, {0, 0, 0, 1}}} * mat<4, 4>{{{1, 0, 0, -eye.x}, {0, 1, 0, -eye.y}, {0, 0, 1, -eye.z}, {0, 0, 0, 1}}};
 }
 
 auto perspective(const double f) -> mat<4, 4> {
-    return {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, -1 / f, 1}}};
+    return {{{1, 0, 0, 0}, {0, -1, 0, 0}, {0, 0, 1, 0}, {0, 0, -1 / f, 0}}};
 }
 
 auto viewport(const int x, const int y, const int w, const int h) -> mat<4, 4> {
-    return {{{w / 2.0, 0, 0, x + w / 2.0}, {0, h / 2.0, 0, y + w / 2.0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
+    return {{{w / 2.0, 0, 0, x + w / 2.0}, {0, h / 2.0, 0, y + h / 2.0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
 }
 auto rasterize(const std::array<Vec4d, 3>& clip, const mat<4, 4>& viewport, std::vector<double>& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {
     const auto ndc    = std::array<Vec4d, 3>{clip[0] / clip[0].w, clip[1] / clip[1].w, clip[2] / clip[2].w};
@@ -50,6 +58,37 @@ auto rotate(const Vec3d v) -> Vec3d {
 auto perspective(const Vec3d v) -> Vec3d {
     constexpr auto c = double(3);
     return v / (1 - v.z / c);
+}
+
+auto barycentric(const std::array<Vec2d, 3> tri, const Vec2d P) -> Vec3d {
+    const auto ABC = mat<3, 3>{{{tri[0].x, tri[0].y, 1.0}, {tri[1].x, tri[1].y, 1.0}, {tri[2].x, tri[2].y, 1.0}}};
+    if(ABC.det() < 1) return {-1, 1, 1};
+    return ABC.invert_transpose() * Vec3d(P.x, P.y, 1.0);
+}
+
+auto triangle(const std::array<vec4<double>, 3> t, IShader& shader, std::vector<double>& zbuffer, TGAImage& image) -> void {
+    const auto pts  = std::array<Vec4d, 3>{gl::ViewPort * t[0], gl::ViewPort * t[1], gl::ViewPort * t[2]};
+    const auto pts2 = std::array<Vec2d, 3>{(pts[0] / pts[0].w).xy(), (pts[1] / pts[1].w).xy(), (pts[2] / pts[2].w).xy()};
+
+    const auto bbminx = std::max(0, static_cast<int>(std::min(std::min(pts2[0].x, pts2[1].x), pts2[2].x)));
+    const auto bbminy = std::max(0, static_cast<int>(std::min(std::min(pts2[0].y, pts2[1].y), pts2[2].y)));
+    const auto bbmaxx = std::min(int(image.get_width() - 1), static_cast<int>(std::max(std::max(pts2[0].x, pts2[1].x), pts2[2].x)));
+    const auto bbmaxy = std::min(int(image.get_height() - 1), static_cast<int>(std::max(std::max(pts2[0].y, pts2[1].y), pts2[2].y)));
+
+#pragma omp parallel for
+    for(auto x = bbminx; x <= bbmaxx; x++) {
+        for(auto y = bbminy; y <= bbmaxy; y++) {
+            const auto bc_screen  = barycentric(pts2, {static_cast<double>(x), static_cast<double>(y)});
+            auto       bc_clip    = Vec3d(bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w);
+            bc_clip               = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z);
+            const auto frag_depth = bc_clip * Vec3d(t[0].z, t[1].z, t[2].z);
+            if(bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || frag_depth > zbuffer[x + y * image.get_width()]) continue;
+            auto color = TGAColor();
+            if(shader.fragment(bc_clip, color)) continue;
+            zbuffer[x + y * image.get_width()] = frag_depth;
+            image.set(x, y, color);
+        }
+    }
 }
 
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {

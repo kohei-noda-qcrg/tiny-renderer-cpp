@@ -20,7 +20,7 @@ inline auto paint_sample_triangle(TGAImage& framebuffer) -> void {
 
 inline auto paint_clown_model(TGAImage& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) -> void {
     // clown colors, random
-    for(auto i = 0; i < model.nfaces(); i++) {
+    for(auto i = 0u; i < model.nfaces(); i++) {
         const auto posa  = gl::project<int>(gl::perspective(gl::rotate(model.vert(i, 0))), width, height);
         const auto posb  = gl::project<int>(gl::perspective(gl::rotate(model.vert(i, 1))), width, height);
         const auto posc  = gl::project<int>(gl::perspective(gl::rotate(model.vert(i, 2))), width, height);
@@ -32,7 +32,7 @@ inline auto paint_clown_model(TGAImage& zbuffer, TGAImage& framebuffer, const Mo
 inline auto paint_illumination_model(TGAImage& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) -> void {
     // illmination from light_dir
     const auto light_dir = Vec3d(0, 0, -1);
-    for(auto i = 0; i < model.nfaces(); i++) {
+    for(auto i = 0u; i < model.nfaces(); i++) {
         auto screen_coords = std::array<Vec3i, 3>();
         auto world_coords  = std::array<Vec3d, 3>();
         for(auto j = 0; j < 3; j++) {

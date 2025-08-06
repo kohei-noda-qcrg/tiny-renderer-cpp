@@ -6,6 +6,17 @@
 #include "tgaimage.h"
 
 namespace gl {
+using Matrix = mat<4, 4>;
+
+extern Matrix ModelView;
+extern Matrix ViewPort;
+extern Matrix Perspective;
+
+struct IShader {
+    virtual Vec4d vertex(const int iface, const int nthvert) = 0;
+    virtual bool  fragment(const Vec3d bar, TGAColor& color) = 0;
+};
+
 auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4>;
 auto perspective(const double f) -> mat<4, 4>;
 auto viewport(const int x, const int y, const int w, const int h) -> mat<4, 4>;
@@ -13,6 +24,7 @@ auto rasterize(const std::array<Vec4d, 3>& clip, const mat<4, 4>& viewport, std:
 
 auto rotate(const Vec3d v) -> Vec3d;
 auto perspective(const Vec3d v) -> Vec3d;
+auto triangle(const std::array<vec4<double>, 3> t, IShader& shader, std::vector<double>& zbuffer, TGAImage& image) -> void;
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void;
 auto triangle(const std::array<vec2<int>, 3> t, TGAImage& framebuffer, const TGAColor& color) -> void;
 

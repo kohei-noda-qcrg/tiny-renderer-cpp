@@ -7,7 +7,7 @@
 #include "tgaimage.h"
 
 TGAImage::TGAImage() : data{}, width(0), height(0), format(RGB) {}
-TGAImage::TGAImage(size_t width, size_t height, Format format) : data(width * height * format, 0), width(width), height(height), format(format) {}
+TGAImage::TGAImage(const size_t width, const size_t height, const Format format) : data(width * height * format, 0), width(width), height(height), format(format) {}
 
 TGAImage::TGAImage(const TGAImage& img) {
     data   = img.data;
@@ -26,7 +26,7 @@ TGAImage& TGAImage::operator=(const TGAImage& img) {
     return *this;
 }
 
-bool TGAImage::read_tga_file(const char* filename) {
+bool TGAImage::read_tga_file(const std::string filename) {
     auto in = std::ifstream();
     in.open(filename, std::ios::binary);
     if(!in.is_open()) {
@@ -128,7 +128,7 @@ bool TGAImage::load_rle_data(std::ifstream& in) {
     return true;
 }
 
-bool TGAImage::write_tga_file(const char* filename, bool rle) {
+bool TGAImage::write_tga_file(const std::string filename, const bool rle) {
 
     const auto developer_area_ref = std::array<uint8_t, 4>{0, 0, 0, 0};
     const auto extension_area_ref = std::array<uint8_t, 4>{0, 0, 0, 0};
@@ -146,7 +146,7 @@ bool TGAImage::write_tga_file(const char* filename, bool rle) {
     header.width           = width;
     header.height          = height;
     header.datatypecode    = (format == GRAYSCALE ? (rle ? 11 : 3) : (rle ? 10 : 2));
-    header.imagedescriptor = 0x20; // top-left origin
+    header.imagedescriptor = 0x00; // top-left origin
     out.write((char*)&header, sizeof(header));
     if(!out.good()) {
         out.close();
