@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euxo
+set -eu
 
 error_exit() {
     echo "$1" >&2
@@ -41,16 +41,16 @@ for BIN in "$BINDIR"/test_*; do
         result_name=${binbase#test_}
         result_name=${result_name%_nomodel}
         result_name="${result_name}.tga"
-        $BIN
+        time $BIN
         compare "$SCRIPT_DIR/$result_name" "$ORIG/$result_name" /dev/null
     else
         for f in $(find $OBJDIR -type f); do
-            obj_name="$(basename $f)"
+            obj_name="$(basename "$f")"
             if [[ "$obj_name" != *.obj ]]; then
                 continue
             fi
             result_name="${suffix}_${obj_name%.obj}.tga"
-            $BIN "$f"
+            time $BIN "$f"
             compare "$SCRIPT_DIR/$result_name" "$ORIG/$result_name" /dev/null
         done
     fi
