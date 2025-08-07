@@ -9,11 +9,11 @@ error_exit() {
 }
 
 usage() {
-    echo "usage: $0 /path/to/binary_to_run" >&2
+    echo "usage: $0 /path/to/build_dir" >&2
 }
 
 SCRIPT_DIR="$(
-    cd $(dirname $0)
+    cd "$(dirname "$0")"
     pwd
 )"
 ORIG="$SCRIPT_DIR/orig"
@@ -21,19 +21,28 @@ OBJDIR="$SCRIPT_DIR/obj"
 
 if [ "$#" -ne 1 ]; then
     error_exit "this script allows one argument only"
-elif [ ! -f "$1" ]; then
+elif [ ! -d "$1" ]; then
     error_exit "$1 is not a existing file"
-elif [ ! -x "$1" ]; then
-    error_exit "$1 is not executable"
 fi
 
-BIN="$(readlink -f $1)"
-for f in $(find $OBJDIR -type f); do
-    obj_name="$(basename $f)"
-    if [[ "$obj_name" != *.obj ]]; then
+BINDIR="$(readlink -f $1)"
+for BIN in "$BINDIR"/test_*; do
+    if [ -d "$BIN" ]; then
+        # skip if BIN is directory e.g. test_a.p
         continue
+    elif [ ! -x "$BIN" ]; then
+        echo "$BIN is not executable or permitted to execute"
+        exit 1 # treated as test failed
     fi
-    result_name="${obj_name%.obj}.tga"
-    $BIN $f
-    compare $SCRIPT_DIR/output.tga $ORIG/$result_name /dev/null
+    binbase="$(basename "$BIN")"
+    suffix="${binbase#test_}"
+    for f in $(find $OBJDIR -type f); do
+        obj_name="$(basename $f)"
+        if [[ "$obj_name" != *.obj ]]; then
+            continue
+        fi
+        result_name="${suffix}_${obj_name%.obj}.tga"
+        $BIN "$f"
+        compare "$SCRIPT_DIR/$result_name" "$ORIG/$result_name" /dev/null
+    done
 done
