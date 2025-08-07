@@ -7,10 +7,22 @@ project(
 add_project_arguments('-Wno-missing-field-initializers', language: 'cpp')
 add_project_arguments('-Wfatal-errors', language: 'cpp')
 
+glfw3 = dependency('glfw3', required: true)
+gl = dependency('gl', required: true)
+
+deps = [glfw3, gl]
+
 common_sources = files(
   'gl.cpp',
   'model.cpp',
   'tgaimage.cpp',
+)
+
+executable(
+  'window',
+  files('window.cpp') + common_sources,
+  dependencies: deps,
+  install: true,
 )
 
 executable(
