@@ -87,10 +87,10 @@ struct Shader : gl::IShader {
     }
 
     virtual bool fragment(Vec3d bar, TGAColor& color) {
-        const auto tex_interpolation = bar * varying_uv;
-        const auto diffuse           = model.diffuse();
-        const auto uv                = Vec2d(tex_interpolation.x * diffuse.get_width(), tex_interpolation.y * diffuse.get_height());
-        color                        = diffuse.get(uv.x, uv.y);
+        const auto  tex_interpolation = bar * varying_uv;
+        const auto& diffuse           = model.diffuse();
+        const auto  uv                = Vec2d(tex_interpolation.x * diffuse.get_width(), tex_interpolation.y * diffuse.get_height());
+        color                         = diffuse.get(uv.x, uv.y);
         return false;
     }
 };
