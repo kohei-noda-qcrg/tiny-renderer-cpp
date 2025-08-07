@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -euxo
 
 error_exit() {
     echo "$1" >&2
@@ -16,7 +16,7 @@ SCRIPT_DIR="$(
     cd "$(dirname "$0")"
     pwd
 )"
-ORIG="$SCRIPT_DIR/orig"
+ORIG="$SCRIPT_DIR/test/orig"
 OBJDIR="$SCRIPT_DIR/obj"
 
 if [ "$#" -ne 1 ]; then
@@ -25,7 +25,7 @@ elif [ ! -d "$1" ]; then
     error_exit "$1 is not a existing file"
 fi
 
-BINDIR="$(readlink -f $1)"
+BINDIR="$(readlink -f "$1")"
 for BIN in "$BINDIR"/test_*; do
     if [ -d "$BIN" ]; then
         # skip if BIN is directory e.g. test_a.p
@@ -36,13 +36,22 @@ for BIN in "$BINDIR"/test_*; do
     fi
     binbase="$(basename "$BIN")"
     suffix="${binbase#test_}"
-    for f in $(find $OBJDIR -type f); do
-        obj_name="$(basename $f)"
-        if [[ "$obj_name" != *.obj ]]; then
-            continue
-        fi
-        result_name="${suffix}_${obj_name%.obj}.tga"
-        $BIN "$f"
+    if [[ "$binbase" == *_nomodel ]]; then
+        # No model test
+        result_name=${binbase#test_}
+        result_name=${result_name%_nomodel}
+        result_name="${result_name}.tga"
+        $BIN
         compare "$SCRIPT_DIR/$result_name" "$ORIG/$result_name" /dev/null
-    done
+    else
+        for f in $(find $OBJDIR -type f); do
+            obj_name="$(basename $f)"
+            if [[ "$obj_name" != *.obj ]]; then
+                continue
+            fi
+            result_name="${suffix}_${obj_name%.obj}.tga"
+            $BIN "$f"
+            compare "$SCRIPT_DIR/$result_name" "$ORIG/$result_name" /dev/null
+        done
+    fi
 done
