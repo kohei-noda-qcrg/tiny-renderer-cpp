@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 
 #include "geometry.h"
@@ -64,6 +65,29 @@ auto barycentric(const std::array<Vec2d, 3> tri, const Vec2d P) -> Vec3d {
     const auto ABC = mat<3, 3>{{{tri[0].x, tri[0].y, 1.0}, {tri[1].x, tri[1].y, 1.0}, {tri[2].x, tri[2].y, 1.0}}};
     if(ABC.det() < 1) return {-1, 1, 1};
     return ABC.invert_transpose() * Vec3d(P.x, P.y, 1.0);
+}
+
+auto triangle(const std::array<vec4<double>, 3> t, std::vector<double>& zbuffer, TGAImage& image, const TGAColor& color) -> void {
+    const auto pts  = std::array<Vec4d, 3>{gl::ViewPort * t[0], gl::ViewPort * t[1], gl::ViewPort * t[2]};
+    const auto pts2 = std::array<Vec2d, 3>{(pts[0] / pts[0].w).xy(), (pts[1] / pts[1].w).xy(), (pts[2] / pts[2].w).xy()};
+
+    const auto [minx, maxx] = std::minmax({pts2[0].x, pts2[1].x, pts2[2].x});
+    const auto [miny, maxy] = std::minmax({pts2[0].y, pts2[1].y, pts2[2].y});
+    const auto bbmin        = Vec2i(std::clamp<int>(minx, 0, image.get_width() - 1), std::clamp<int>(miny, 0, image.get_height() - 1));
+    const auto bbmax        = Vec2i(std::clamp<int>(maxx, 0, image.get_width() - 1), std::clamp<int>(maxy, 0, image.get_height() - 1));
+
+#pragma omp parallel for
+    for(auto x = bbmin.x; x <= bbmax.x; x++) {
+        for(auto y = bbmin.y; y <= bbmax.y; y++) {
+            const auto bc_screen  = barycentric(pts2, {static_cast<double>(x), static_cast<double>(y)});
+            auto       bc_clip    = Vec3d(bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w);
+            bc_clip               = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z);
+            const auto frag_depth = bc_clip * Vec3d(t[0].z, t[1].z, t[2].z);
+            if(bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || frag_depth > zbuffer[x + y * image.get_width()]) continue;
+            zbuffer[x + y * image.get_width()] = frag_depth;
+            image.set(x, y, color);
+        }
+    }
 }
 
 auto triangle(const std::array<vec4<double>, 3> t, IShader& shader, std::vector<double>& zbuffer, TGAImage& image) -> void {

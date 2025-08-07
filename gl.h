@@ -24,6 +24,7 @@ auto rasterize(const std::array<Vec4d, 3>& clip, const mat<4, 4>& viewport, std:
 
 auto rotate(const Vec3d v) -> Vec3d;
 auto perspective(const Vec3d v) -> Vec3d;
+auto triangle(const std::array<vec4<double>, 3> t, std::vector<double>& zbuffer, TGAImage& image, const TGAColor& color) -> void;
 auto triangle(const std::array<vec4<double>, 3> t, IShader& shader, std::vector<double>& zbuffer, TGAImage& image) -> void;
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void;
 auto triangle(const std::array<vec2<int>, 3> t, TGAImage& framebuffer, const TGAColor& color) -> void;
