@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <print>
+#include <random>
 
 #include "color.h"
 #include "geometry.h"
@@ -47,5 +48,27 @@ inline auto paint_illumination_model(TGAImage& zbuffer, TGAImage& framebuffer, c
             const auto color = TGAColor(intensity * 255, intensity * 255, intensity * 255, 255);
             gl::triangle(screen_coords, zbuffer, framebuffer, color);
         }
+    }
+}
+
+inline auto paint_perspective_clown_model(std::vector<double>& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) {
+    // viewport
+    auto           rng    = std::mt19937(1);
+    constexpr auto eye    = Vec3d(-1, 0, 2);
+    constexpr auto center = Vec3d(0, 0, 0);
+    constexpr auto up     = Vec3d(0, 1, 0);
+
+    gl::ModelView   = gl::lookat(eye, center, up);
+    gl::Perspective = gl::perspective(norm(eye - center));
+    gl::ViewPort    = gl::viewport(width / 16, height / 16, width * 7 / 8, height * 7 / 8);
+    for(auto i = 0u; i < model.nfaces(); i++) {
+        auto clip = std::array<Vec4d, 3>();
+        for(auto d = 0u; d < clip.size(); d++) {
+            auto v  = model.vert(i, d);
+            clip[d] = gl::Perspective * gl::ModelView * Vec4d(v.x, v.y, v.z, 1.0);
+        }
+        const auto rnd   = rng();
+        const auto color = TGAColor((rnd >> 24) & 0xFF, (rnd >> 16) & 0xFF, (rnd >> 8) & 0xFF, rnd & 0xFF);
+        gl::triangle(clip, zbuffer, framebuffer, color);
     }
 }

@@ -17,3 +17,13 @@ executable(
   ),
   install: true,
 )
+
+executable(
+  'test_perspective_clown',
+  files(
+    'test/perspective_clown.cpp',
+    'gl.cpp',
+    'model.cpp',
+    'tgaimage.cpp',
+  ),
+)
