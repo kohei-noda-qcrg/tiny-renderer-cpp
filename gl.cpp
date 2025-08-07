@@ -76,12 +76,6 @@ auto triangle(const std::array<vec4<double>, 3> t, IShader& shader, std::vector<
     const auto [miny, maxy] = std::minmax({pts2[0].y, pts2[1].y, pts2[2].y});
     const auto bbmin        = Vec2i(std::clamp<int>(minx, 0, image.get_width() - 1), std::clamp<int>(miny, 0, image.get_height() - 1));
     const auto bbmax        = Vec2i(std::clamp<int>(maxx, 0, image.get_width() - 1), std::clamp<int>(maxy, 0, image.get_height() - 1));
-    /*
-    const auto bbminx = std::max(0, static_cast<int>(std::min(std::min(pts2[0].x, pts2[1].x), pts2[2].x)));
-    const auto bbminy = std::max(0, static_cast<int>(std::min(std::min(pts2[0].y, pts2[1].y), pts2[2].y)));
-    const auto bbmaxx = std::min(int(image.get_width() - 1), static_cast<int>(std::max(std::max(pts2[0].x, pts2[1].x), pts2[2].x)));
-    const auto bbmaxy = std::min(int(image.get_height() - 1), static_cast<int>(std::max(std::max(pts2[0].y, pts2[1].y), pts2[2].y)));
-    */
 
 #pragma omp parallel for
     for(auto x = bbmin.x; x <= bbmax.x; x++) {
@@ -100,18 +94,19 @@ auto triangle(const std::array<vec4<double>, 3> t, IShader& shader, std::vector<
 }
 
 auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void {
-    const auto boundary_box_min_x = std::max(0, std::min(std::min(t[0].x, t[1].x), t[2].x));
-    const auto boundary_box_min_y = std::max(0, std::min(std::min(t[0].y, t[1].y), t[2].y));
-    const auto boundary_box_max_x = std::min(int(framebuffer.get_width() - 1), std::max(std::max(t[0].x, t[1].x), t[2].x));
-    const auto boundary_box_max_y = std::min(int(framebuffer.get_height() - 1), std::max(std::max(t[0].y, t[1].y), t[2].y));
-    const auto t0vec2             = vec2<int>{t[0].x, t[0].y};
-    const auto t1vec2             = vec2<int>{t[1].x, t[1].y};
-    const auto t2vec2             = vec2<int>{t[2].x, t[2].y};
-    const auto total_area         = signed_triangle_area(t0vec2, t1vec2, t2vec2);
+    const auto [minx, maxx] = std::minmax({t[0].x, t[1].x, t[2].x});
+    const auto [miny, maxy] = std::minmax({t[0].y, t[1].y, t[2].y});
+    const auto bbmin        = Vec2i(std::clamp<int>(minx, 0, framebuffer.get_width() - 1), std::clamp<int>(miny, 0, framebuffer.get_height() - 1));
+    const auto bbmax        = Vec2i(std::clamp<int>(maxx, 0, framebuffer.get_width() - 1), std::clamp<int>(maxy, 0, framebuffer.get_height() - 1));
+
+    const auto t0vec2     = vec2<int>{t[0].x, t[0].y};
+    const auto t1vec2     = vec2<int>{t[1].x, t[1].y};
+    const auto t2vec2     = vec2<int>{t[2].x, t[2].y};
+    const auto total_area = signed_triangle_area(t0vec2, t1vec2, t2vec2);
     if(total_area < 1) return; // back-face culling
 #pragma omp parallel for
-    for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
-        for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
+    for(auto x = bbmin.x; x <= bbmax.x; x++) {
+        for(auto y = bbmin.y; y <= bbmax.y; y++) {
             const auto pos   = vec2<int>(x, y);
             const auto alpha = signed_triangle_area(pos, t1vec2, t2vec2) / total_area;
             const auto beta  = signed_triangle_area(pos, t2vec2, t0vec2) / total_area;
@@ -127,14 +122,14 @@ auto triangle(const std::array<vec3<int>, 3> t, TGAImage& zbuffer, TGAImage& fra
 
 // 2D
 auto triangle(const std::array<vec2<int>, 3> t, TGAImage& framebuffer, const TGAColor& color) -> void {
-    const auto boundary_box_min_x = std::max(0, std::min(std::min(t[0].x, t[1].x), t[2].x));
-    const auto boundary_box_min_y = std::max(0, std::min(std::min(t[0].y, t[1].y), t[2].y));
-    const auto boundary_box_max_x = std::min(int(framebuffer.get_width() - 1), std::max(std::max(t[0].x, t[1].x), t[2].x));
-    const auto boundary_box_max_y = std::min(int(framebuffer.get_height() - 1), std::max(std::max(t[0].y, t[1].y), t[2].y));
-    const auto total_area         = signed_triangle_area(t[0], t[1], t[2]);
+    const auto [minx, maxx] = std::minmax({t[0].x, t[1].x, t[2].x});
+    const auto [miny, maxy] = std::minmax({t[0].y, t[1].y, t[2].y});
+    const auto bbmin        = Vec2i(std::clamp<int>(minx, 0, framebuffer.get_width() - 1), std::clamp<int>(miny, 0, framebuffer.get_height() - 1));
+    const auto bbmax        = Vec2i(std::clamp<int>(maxx, 0, framebuffer.get_width() - 1), std::clamp<int>(maxy, 0, framebuffer.get_height() - 1));
+    const auto total_area   = signed_triangle_area(t[0], t[1], t[2]);
 #pragma omp parallel for
-    for(auto x = boundary_box_min_x; x <= boundary_box_max_x; x++) {
-        for(auto y = boundary_box_min_y; y <= boundary_box_max_y; y++) {
+    for(auto x = bbmin.x; x <= bbmax.x; x++) {
+        for(auto y = bbmin.y; y <= bbmax.y; y++) {
             const auto pos   = vec2<int>(x, y);
             const auto alpha = signed_triangle_area(pos, t[1], t[2]) / total_area;
             const auto beta  = signed_triangle_area(pos, t[2], t[0]) / total_area;
