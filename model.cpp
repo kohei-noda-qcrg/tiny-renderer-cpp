@@ -9,10 +9,12 @@
 #include "model.h"
 #include "tgaimage.h"
 
-Model::Model(const std::string_view filename) {
-    auto in = std::ifstream();
-    in.open(filename.data(), std::ifstream::in);
-    if(!in) return;
+Model::Model(std::string_view filepath) {
+    auto in = std::ifstream(filepath.data());
+    if(!in) {
+        std::println(stderr, "failed to open {}", filepath);
+        return;
+    }
     auto line = std::string();
     while(!in.eof()) {
         std::getline(in, line);
@@ -55,7 +57,7 @@ Model::Model(const std::string_view filename) {
             }
         }
     }
-    std::println(stderr, "# v# {} f# {} vt# {} vn# {} name# {}", nverts(), nfaces(), tex.size(), norms.size(), filename.data());
+    std::println(stderr, "# v# {} f# {} vt# {} vn# {} name# {}", nverts(), nfaces(), tex.size(), norms.size(), filepath);
     // Painter's algorithm (too slow)
     /*
         auto idx = [&] {auto ret = std::vector<int>(nfaces()); std::iota(ret.begin(), ret.end(), 0); return ret; }();
@@ -73,6 +75,7 @@ Model::Model(const std::string_view filename) {
         }
     */
 }
+
 auto Model::load_texture(std::string_view obj_file, std::string_view suffix, TGAImage& img) -> bool {
     const auto last_dot = obj_file.find_last_of(".");
     if(last_dot == std::string::npos) {

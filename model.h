@@ -16,7 +16,7 @@ class Model {
     TGAImage diffusemap = {};
 
   public:
-    Model(const std::string_view filename);
+    Model(std::string_view filepath);
     auto load_texture(const std::string_view obj_filename, const std::string_view suffix, TGAImage& img) -> bool;
     auto load_diffusemap(const std::string_view obj_filename) -> bool;
     auto nverts() const -> size_t;
