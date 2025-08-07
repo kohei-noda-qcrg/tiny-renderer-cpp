@@ -38,3 +38,8 @@ executable(
   'test_perspective_clown',
   files('test/perspective_clown.cpp') + common_sources,
 )
+
+executable(
+  'test_perspective_with_diffusemap',
+  files('test/perspective_with_diffusemap.cpp') + common_sources,
+)
