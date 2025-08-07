@@ -20,7 +20,6 @@ struct IShader {
 auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4>;
 auto perspective(const double f) -> mat<4, 4>;
 auto viewport(const int x, const int y, const int w, const int h) -> mat<4, 4>;
-auto rasterize(const std::array<Vec4d, 3>& clip, const mat<4, 4>& viewport, std::vector<double>& zbuffer, TGAImage& framebuffer, const TGAColor& color) -> void;
 
 auto rotate(const Vec3d v) -> Vec3d;
 auto perspective(const Vec3d v) -> Vec3d;
