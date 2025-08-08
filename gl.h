@@ -40,6 +40,9 @@ struct Shader : IShader {
     }
 };
 
+template <typename T>
+concept ShaderConcept = std::is_base_of_v<gl::IShader, T>;
+
 auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4>;
 auto perspective(const double f) -> mat<4, 4>;
 auto viewport(const int x, const int y, const int w, const int h) -> mat<4, 4>;
