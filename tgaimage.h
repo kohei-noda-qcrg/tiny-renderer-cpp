@@ -57,6 +57,15 @@ struct TGAColor {
         }
         return *this;
     }
+
+    TGAColor operator*(const double intensity) {
+        auto ret = *this;
+        ret.r *= intensity;
+        ret.g *= intensity;
+        ret.b *= intensity;
+        ret.a *= intensity;
+        return ret;
+    }
 };
 
 class TGAImage {
