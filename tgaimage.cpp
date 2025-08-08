@@ -294,6 +294,10 @@ unsigned char* TGAImage::buffer() {
     return data.data();
 }
 
+void TGAImage::fill(const std::uint8_t v) {
+    std::fill(data.begin(), data.end(), v);
+}
+
 void TGAImage::clear() {
     data.clear();
 }

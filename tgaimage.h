@@ -83,6 +83,7 @@ class TGAImage {
     size_t    get_height() const;
     Format    get_format() const;
     uint8_t*  buffer();
+    void      fill(const uint8_t v);
     void      clear();
 
   private:
