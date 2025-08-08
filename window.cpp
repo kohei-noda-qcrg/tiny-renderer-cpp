@@ -9,6 +9,37 @@
 namespace {
 constexpr auto width  = 800;
 constexpr auto height = 800;
+
+auto last_x      = 3.0;
+auto last_y      = 0.0;
+auto eye         = Vec3d(last_x, last_y, 3);
+auto is_dragging = false;
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if(button == GLFW_MOUSE_BUTTON_LEFT) {
+        if(action == GLFW_PRESS) {
+            is_dragging = true;
+            glfwGetCursorPos(window, &last_x, &last_y);
+        } else if(action == GLFW_RELEASE) {
+            is_dragging = false;
+        }
+    }
+}
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    if(is_dragging) {
+        double dx = xpos - last_x;
+        double dy = ypos - last_y;
+
+        // Update camera 'eye' vector here based on dx and dy
+        // For example, you could update a global 'eye' variable
+        // The scaling factor (e.g., 0.1) controls the camera's movement speed
+        eye.x += dx * 0.1;
+        eye.y += dy * 0.1;
+
+        last_x = xpos;
+        last_y = ypos;
+    }
+}
+
 } // namespace
 
 auto main(const int argc, const char* argv[]) -> int {
@@ -37,6 +68,8 @@ auto main(const int argc, const char* argv[]) -> int {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
 
     auto format          = GL_RGBA;
     auto internal_format = GL_RGBA;
@@ -71,7 +104,6 @@ auto main(const int argc, const char* argv[]) -> int {
         std::print("\r{} times rendered", x);
         std::fflush(stdout);
         x++;
-        const auto eye = Vec3d(x % 64, 0, 3);
         paint_diffuse_texture_with_eye<gl::Shader>(eye, zbuffer, image, model, width, height);
 
         glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.get_width(), image.get_height(), 0, format, GL_UNSIGNED_BYTE, image.buffer());
