@@ -113,3 +113,21 @@ inline auto paint_perspective_with_diffusemap(std::vector<double>& zbuffer, TGAI
         gl::triangle(screen_coords, shader, zbuffer, framebuffer);
     }
 }
+
+inline auto paint_diffuse_texture_with_eye(const Vec3d eye, std::vector<double>& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) {
+    //  viewport
+    constexpr auto center = Vec3d(0, 0, 0);
+    constexpr auto up     = Vec3d(0, 1, 0);
+
+    gl::ModelView   = gl::lookat(eye, center, up);
+    gl::Perspective = gl::perspective(norm(eye - center));
+    gl::ViewPort    = gl::viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
+    auto shader     = Shader(model);
+    for(auto i = 0u; i < model.nfaces(); i++) {
+        auto screen_coords = std::array<Vec4d, 3>();
+        for(auto j = 0u; j < screen_coords.size(); j++) {
+            screen_coords[j] = shader.vertex(i, j);
+        }
+        gl::triangle(screen_coords, shader, zbuffer, framebuffer);
+    }
+}
