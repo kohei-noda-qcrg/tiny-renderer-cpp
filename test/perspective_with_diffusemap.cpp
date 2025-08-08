@@ -23,7 +23,7 @@ auto main(const int argc, const char* argv[]) -> int {
     }
     auto framebuffer = TGAImage(width, height, TGAImage::RGB);
     auto zbuffer     = std::vector<double>(width * height, std::numeric_limits<double>::max());
-    paint_perspective_with_diffusemap(zbuffer, framebuffer, model, width, height);
+    paint_perspective_with_diffusemap<gl::Shader>(zbuffer, framebuffer, model, width, height);
 
     const auto output = GEN_TEST_OUTPUT_NAME(filepath, ".tga");
     framebuffer.write_tga_file(output);

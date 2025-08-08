@@ -72,7 +72,7 @@ auto main(const int argc, const char* argv[]) -> int {
         std::fflush(stdout);
         x++;
         const auto eye = Vec3d(x % 64, 0, 3);
-        paint_diffuse_texture_with_eye(eye, zbuffer, image, model, width, height);
+        paint_diffuse_texture_with_eye<gl::Shader>(eye, zbuffer, image, model, width, height);
 
         glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.get_width(), image.get_height(), 0, format, GL_UNSIGNED_BYTE, image.buffer());
         glClear(GL_COLOR_BUFFER_BIT);

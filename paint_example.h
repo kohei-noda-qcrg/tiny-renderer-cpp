@@ -73,6 +73,7 @@ inline auto paint_perspective_clown_model(std::vector<double>& zbuffer, TGAImage
     }
 }
 
+template <gl::ShaderConcept T>
 inline auto paint_perspective_with_diffusemap(std::vector<double>& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) {
     //  viewport
     constexpr auto eye    = Vec3d(1, 1, 3);
@@ -82,7 +83,7 @@ inline auto paint_perspective_with_diffusemap(std::vector<double>& zbuffer, TGAI
     gl::ModelView   = gl::lookat(eye, center, up);
     gl::Perspective = gl::perspective(norm(eye - center));
     gl::ViewPort    = gl::viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
-    auto shader     = gl::Shader(model);
+    auto shader     = T(model);
     for(auto i = 0u; i < model.nfaces(); i++) {
         auto screen_coords = std::array<Vec4d, 3>();
         for(auto j = 0u; j < screen_coords.size(); j++) {
@@ -92,7 +93,8 @@ inline auto paint_perspective_with_diffusemap(std::vector<double>& zbuffer, TGAI
     }
 }
 
-inline auto paint_diffuse_texture_with_eye(const Vec3d eye, std::vector<double>& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) {
+template <gl::ShaderConcept T>
+auto paint_diffuse_texture_with_eye(const Vec3d eye, std::vector<double>& zbuffer, TGAImage& framebuffer, const Model& model, const int width, const int height) {
     //  viewport
     constexpr auto center = Vec3d(0, 0, 0);
     constexpr auto up     = Vec3d(0, 1, 0);
@@ -100,7 +102,7 @@ inline auto paint_diffuse_texture_with_eye(const Vec3d eye, std::vector<double>&
     gl::ModelView   = gl::lookat(eye, center, up);
     gl::Perspective = gl::perspective(norm(eye - center));
     gl::ViewPort    = gl::viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
-    auto shader     = gl::Shader(model);
+    auto shader     = T(model);
     for(auto i = 0u; i < model.nfaces(); i++) {
         auto screen_coords = std::array<Vec4d, 3>();
         for(auto j = 0u; j < screen_coords.size(); j++) {

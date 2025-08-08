@@ -35,7 +35,7 @@ auto main(int argc, char** argv) -> int {
 
     auto zbuffer = std::vector<double>(width * height, std::numeric_limits<double>::max());
     // paint_perspective_clown_model(zbuffer, framebuffer, model, width, height);
-    paint_perspective_with_diffusemap(zbuffer, framebuffer, model, width, height);
+    paint_perspective_with_diffusemap<gl::Shader>(zbuffer, framebuffer, model, width, height);
     framebuffer.write_tga_file("output.tga");
     return 0;
 }
