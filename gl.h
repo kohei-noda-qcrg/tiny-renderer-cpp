@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "geometry.h"
+#include "model.h"
 #include "tgaimage.h"
 
 namespace gl {
@@ -15,6 +16,28 @@ extern Matrix Perspective;
 struct IShader {
     virtual Vec4d vertex(const int iface, const int nthvert) = 0;
     virtual bool  fragment(const Vec3d bar, TGAColor& color) = 0;
+};
+
+struct Shader : IShader {
+    const Model& model;
+    mat<3, 2>    varying_uv;
+
+    Shader(const Model& m) : model(m) {}
+
+    virtual Vec4d vertex(const int iface, const int nthvert) {
+        const auto vert     = model.vert(iface, nthvert);
+        varying_uv[nthvert] = model.uv(iface, nthvert);
+        const auto gl_pos   = gl::ModelView * Vec4d(vert.x, vert.y, vert.z, 1.0);
+        return gl::Perspective * gl_pos;
+    }
+
+    virtual bool fragment(Vec3d bar, TGAColor& color) {
+        const auto  tex_interpolation = bar * varying_uv;
+        const auto& diffuse           = model.diffuse();
+        const auto  uv                = Vec2d(tex_interpolation.x * diffuse.get_width(), tex_interpolation.y * diffuse.get_height());
+        color                         = diffuse.get(uv.x, uv.y);
+        return false;
+    }
 };
 
 auto lookat(const Vec3d eye, const Vec3d center, const Vec3d up) -> mat<4, 4>;

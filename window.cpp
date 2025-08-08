@@ -66,11 +66,11 @@ auto main(const int argc, const char* argv[]) -> int {
 
     auto x = 0;
     while(glfwWindowShouldClose(window) == GL_FALSE) {
-        x++;
         std::fill(zbuffer.begin(), zbuffer.end(), std::numeric_limits<double>::max());
         image.fill(0);
-        std::print("\rx: {}", x);
+        std::print("\r{} times rendered", x);
         std::fflush(stdout);
+        x++;
         const auto eye = Vec3d(x % 64, 0, 3);
         paint_diffuse_texture_with_eye(eye, zbuffer, image, model, width, height);
 
